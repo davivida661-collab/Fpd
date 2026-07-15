@@ -1,0 +1,43 @@
+name: Windows 11 Gaming Setup CI - Auto-Launch
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 360
+
+    steps:
+    - name: Launch Steam and GTA V
+      shell: powershell
+      run: |
+        # Locate and launch Steam
+        $steamPath = "C:\Program Files (x86)\Steam\Steam.exe"
+        if (Test-Path $steamPath) {
+            Start-Process -FilePath $steamPath -ArgumentList "-applaunch 271590"
+            Write-Host "Steam and GTA V launch command initiated."
+        } else {
+            Write-Host "Steam installation not found at default path."
+        }
+
+    - name: Configure RDP and Ngrok
+      shell: powershell
+      run: |
+        # Enable RDP
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        
+        # Start Ngrok for access
+        Invoke-WebRequest -Uri "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip" -OutFile "ngrok.zip"
+        Expand-Archive -Path "ngrok.zip" -DestinationPath .
+        .\ngrok.exe config add-authtoken 30CFfgNYCMxlQYOf4joeNSaxe2O_3ki51dfeZofXGWBwbZSxQ
+        Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389" -WindowStyle Hidden
+
+    - name: Keep Alive
+      shell: powershell
+      run: |
+        while($true) {
+            Write-Host "Environment Active"
+            Start-Sleep -Seconds 300
+        }
+        
