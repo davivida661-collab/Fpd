@@ -1,4 +1,4 @@
-name: Windows 10 GitHub Actions CI - Final Corrected
+name: Windows 10 GitHub Actions CI - Final Correction
 
 on: [push, workflow_dispatch]
 
@@ -30,10 +30,11 @@ jobs:
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          # Corrected download URL for Pinggy binary
+          # The binary is served directly via SSH/tunneling commands or specific static paths
+          # Using the standard pinggy client download URL
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://pinggy.io/bin/pinggy.exe", "$env:TEMP\pinggy.exe")
+          $wc.DownloadFile("https://pinggy.io/pinggy", "$env:TEMP\pinggy.exe")
           Start-Process -FilePath "$env:TEMP\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
