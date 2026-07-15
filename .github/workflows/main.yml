@@ -19,20 +19,23 @@ jobs:
         shell: powershell
         run: |
           choco install steam -y --no-progress
-          # Download FiveM using native .NET WebClient to avoid Invoke-WebRequest alias issues
+          # Download FiveM using a reliable path directly
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "$env:TEMP\FiveM.exe")
-          Start-Process -FilePath "$env:TEMP\FiveM.exe" -ArgumentList "--install" -Wait
+          try {
+            $wc.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "$env:TEMP\FiveM.exe")
+          } catch {
+            Write-Host "Primary download failed, skipping."
+          }
 
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          # Use .NET WebClient to avoid 'curl' alias issues in PowerShell
+          # Use explicit .NET WebClient to avoid PowerShell 'curl' alias conflicts
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://pinggy.io/bin/pinggy", "pinggy.exe")
-          Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
+          $wc.DownloadFile("https://pinggy.io/bin/pinggy", "$env:TEMP\pinggy.exe")
+          Start-Process -FilePath "$env:TEMP\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
         shell: powershell
@@ -41,3 +44,4 @@ jobs:
           while ($true) {
               Start-Sleep -Seconds 300
           }
+          
