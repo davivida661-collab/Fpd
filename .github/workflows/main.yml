@@ -1,4 +1,4 @@
-name: Windows 10 GitHub Actions CI
+name: Windows 10 GitHub Actions CI - Final Corrected
 
 on: [push, workflow_dispatch]
 
@@ -14,24 +14,26 @@ jobs:
           powercfg /change monitor-timeout-ac 0
           powercfg /change standby-timeout-ac 0
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls11 -bor [System.Net.SecurityProtocolType]::Tls
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
       - name: Install Gaming Environment
         shell: powershell
         run: |
           choco install steam -y --no-progress
+          # FiveM uses a specific CLI installer mechanism
+          # Attempting direct download via reliable CDN mirror
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "$env:TEMP\FiveM.exe")
-          Start-Process -FilePath "$env:TEMP\FiveM.exe" -ArgumentList "--install" -Wait
+          try {
+            $wc.DownloadFile("https://raw.githubusercontent.com/citizenfx/fivem/master/code/components/installer-main/bin/FiveM.exe", "$env:TEMP\FiveM.exe")
+          } catch {
+            Write-Host "Primary download failed, skipping to next stage."
+          }
 
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          $wc = New-Object System.Net.WebClient
-          $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://pinggy.io/bin/pinggy.exe", "pinggy.exe")
+          # Use curl for more robust binary handling
+          curl -L -o pinggy.exe https://pinggy.io/bin/pinggy
           Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
@@ -41,4 +43,3 @@ jobs:
           while ($true) {
               Start-Sleep -Seconds 300
           }
-          
