@@ -1,43 +1,43 @@
-name: Windows 11 Gaming Setup CI - Auto-Launch
+name: Windows 10 GitHub Actions CI - Full Install
 
 on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 360
+    timeout-minutes: 0
 
     steps:
-    - name: Launch Steam and GTA V
+    - name: Configure Windows Environment
       shell: powershell
       run: |
-        # Locate and launch Steam
-        $steamPath = "C:\Program Files (x86)\Steam\Steam.exe"
-        if (Test-Path $steamPath) {
-            Start-Process -FilePath $steamPath -ArgumentList "-applaunch 271590"
-            Write-Host "Steam and GTA V launch command initiated."
-        } else {
-            Write-Host "Steam installation not found at default path."
-        }
+        powercfg /change monitor-timeout-ac 0
+        powercfg /change standby-timeout-ac 0
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-    - name: Configure RDP and Ngrok
+    - name: Install Gaming Environment
       shell: powershell
       run: |
-        # Enable RDP
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+        # Install Steam and FiveM
+        choco install steam -y
+        Invoke-WebRequest -Uri "https://runtime.fivem.net/pub/FiveM.exe" -OutFile "FiveM.exe"
         
-        # Start Ngrok for access
-        Invoke-WebRequest -Uri "https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-windows-amd64.zip" -OutFile "ngrok.zip"
-        Expand-Archive -Path "ngrok.zip" -DestinationPath .
-        .\ngrok.exe config add-authtoken 30CFfgNYCMxlQYOf4joeNSaxe2O_3ki51dfeZofXGWBwbZSxQ
-        Start-Process -FilePath ".\ngrok.exe" -ArgumentList "tcp 3389" -WindowStyle Hidden
+        # Download GTA V via Steam CLI
+        # Note: Requires user login to Steam account to complete download
+        Start-Process -FilePath "C:\Program Files (x86)\Steam\steam.exe" -ArgumentList "steam://install/271590" -Wait
+
+    - name: Setup Pinggy Tunnel
+      shell: powershell
+      run: |
+        Invoke-WebRequest -Uri "https://pinggy.io/bin/pinggy.exe" -OutFile "pinggy.exe"
+        Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
     - name: Keep Alive
       shell: powershell
       run: |
-        while($true) {
-            Write-Host "Environment Active"
+        Write-Host "System running. Maintain connection..."
+        while ($true) {
             Start-Sleep -Seconds 300
         }
-        
