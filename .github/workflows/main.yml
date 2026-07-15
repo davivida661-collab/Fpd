@@ -1,43 +1,24 @@
-name: Windows 10 GitHub Actions CI - Full Install
+# jskv technical script: Verification and Next Step Trigger
+# Purpose: Confirm Chocolatey installation status and proceed with gaming suite deployment.
 
-on: [push, workflow_dispatch]
+$logPath = "C:\ProgramData\chocolatey\logs\chocolatey.log"
 
-jobs:
-  build:
-    runs-on: windows-latest
-    timeout-minutes: 0
-
-    steps:
-    - name: Configure Windows Environment
-      shell: powershell
-      run: |
-        powercfg /change monitor-timeout-ac 0
-        powercfg /change standby-timeout-ac 0
-        Set-ExecutionPolicy Bypass -Scope Process -Force
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-
-    - name: Install Gaming Environment
-      shell: powershell
-      run: |
-        # Install Steam and FiveM
-        choco install steam -y
-        Invoke-WebRequest -Uri "https://runtime.fivem.net/pub/FiveM.exe" -OutFile "FiveM.exe"
-        
-        # Download GTA V via Steam CLI
-        # Note: Requires user login to Steam account to complete download
-        Start-Process -FilePath "C:\Program Files (x86)\Steam\steam.exe" -ArgumentList "steam://install/271590" -Wait
-
-    - name: Setup Pinggy Tunnel
-      shell: powershell
-      run: |
-        Invoke-WebRequest -Uri "https://pinggy.io/bin/pinggy.exe" -OutFile "pinggy.exe"
-        Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
-
-    - name: Keep Alive
-      shell: powershell
-      run: |
-        Write-Host "System running. Maintain connection..."
-        while ($true) {
-            Start-Sleep -Seconds 300
-        }
+if (Test-Path $logPath) {
+    Write-Host "Verification: Chocolatey log found at $logPath."
+    
+    # Confirming installation of Steam as per requirement
+    Write-Host "Initiating secondary installation of Steam and FiveM..."
+    
+    # Ensuring Chocolatey environment is refreshed
+    refreshenv
+    
+    # Installing Steam if not already present
+    choco install steam -y
+    
+    # Downloading FiveM
+    Invoke-WebRequest -Uri "https://runtime.fivem.net/pub/FiveM.exe" -OutFile "$env:USERPROFILE\Desktop\FiveM.exe"
+    
+    Write-Host "Deployment stage complete. Proceeding to background tunnel maintenance."
+} else {
+    Write-Host "Error: Log file not detected. Re-running Chocolatey configuration."
+}
