@@ -14,19 +14,23 @@ jobs:
           powercfg /change monitor-timeout-ac 0
           powercfg /change standby-timeout-ac 0
           Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
       - name: Install Gaming Environment
         shell: powershell
         run: |
           choco install steam -y
-          Invoke-WebRequest -Uri "https://runtime.fivem.net/pub/FiveM.exe" -OutFile "FiveM.exe"
+          $client = New-Object System.Net.WebClient
+          $client.Headers.Add("User-Agent", "Mozilla/5.0")
+          $client.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "FiveM.exe")
 
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://pinggy.io/bin/pinggy.exe" -OutFile "pinggy.exe"
+          $client = New-Object System.Net.WebClient
+          $client.Headers.Add("User-Agent", "Mozilla/5.0")
+          $client.DownloadFile("https://pinggy.io/bin/pinggy.exe", "pinggy.exe")
           Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
