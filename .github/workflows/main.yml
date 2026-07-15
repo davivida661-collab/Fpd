@@ -19,21 +19,19 @@ jobs:
         shell: powershell
         run: |
           choco install steam -y --no-progress
-          # FiveM uses a specific CLI installer mechanism
-          # Attempting direct download via reliable CDN mirror
+          # Download FiveM using native .NET WebClient to avoid Invoke-WebRequest alias issues
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          try {
-            $wc.DownloadFile("https://raw.githubusercontent.com/citizenfx/fivem/master/code/components/installer-main/bin/FiveM.exe", "$env:TEMP\FiveM.exe")
-          } catch {
-            Write-Host "Primary download failed, skipping to next stage."
-          }
+          $wc.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "$env:TEMP\FiveM.exe")
+          Start-Process -FilePath "$env:TEMP\FiveM.exe" -ArgumentList "--install" -Wait
 
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          # Use curl for more robust binary handling
-          curl -L -o pinggy.exe https://pinggy.io/bin/pinggy
+          # Use .NET WebClient to avoid 'curl' alias issues in PowerShell
+          $wc = New-Object System.Net.WebClient
+          $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+          $wc.DownloadFile("https://pinggy.io/bin/pinggy", "pinggy.exe")
           Start-Process -FilePath ".\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
