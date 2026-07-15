@@ -19,22 +19,21 @@ jobs:
         shell: powershell
         run: |
           choco install steam -y --no-progress
-          # Download FiveM using a reliable path directly
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
           try {
             $wc.DownloadFile("https://runtime.fivem.net/pub/FiveM.exe", "$env:TEMP\FiveM.exe")
           } catch {
-            Write-Host "Primary download failed, skipping."
+            Write-Host "FiveM download skipped."
           }
 
       - name: Setup Pinggy Tunnel
         shell: powershell
         run: |
-          # Use explicit .NET WebClient to avoid PowerShell 'curl' alias conflicts
+          # Corrected download URL for Pinggy binary
           $wc = New-Object System.Net.WebClient
           $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-          $wc.DownloadFile("https://pinggy.io/bin/pinggy", "$env:TEMP\pinggy.exe")
+          $wc.DownloadFile("https://pinggy.io/bin/pinggy.exe", "$env:TEMP\pinggy.exe")
           Start-Process -FilePath "$env:TEMP\pinggy.exe" -ArgumentList "-p 443 -o StrictHostKeyChecking=no -R0:localhost:3389 yU5bqrJJwh1@a.pinggy.io" -WindowStyle Hidden
 
       - name: Keep Alive
@@ -44,4 +43,3 @@ jobs:
           while ($true) {
               Start-Sleep -Seconds 300
           }
-          
